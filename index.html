@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0f0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NutriScan">
+<title>NutriScan AI</title>
+
+<!-- ============================================================
+     NUTRISCAN AI — de instalat pe GitHub Pages
+     Instructiuni: vezi sectiunea de mai jos sau citeste README
+     ============================================================ -->
+
+<!-- IMPORTANT: Inlocuieste YOUR_API_KEY_HERE cu cheia ta Anthropic -->
+<!-- Obtine cheia gratis de pe: https://console.anthropic.com -->
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0f0d;
+  --surface:#111a15;
+  --surface2:#182219;
+  --border:#ffffff12;
+  --accent:#4ade80;
+  --accent2:#22c55e;
+  --text:#f0fdf4;
+  --muted:#6b8f78;
+  --danger:#f87171;
+  --warn:#fbbf24;
+  --info:#60a5fa;
+}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  max-width:480px;
+  margin:0 auto;
+  position:relative;
+  overflow:hidden;
+  height:100vh;
+  height:100dvh;
+}
+
+/* SCREENS */
+.screen{
+  display:none;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+  animation:fadeIn .25s ease;
+  overflow:hidden;
+}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOPBAR */
+.topbar{
+  padding:env(safe-area-inset-top,12px) 20px 0;
+  padding-top:calc(env(safe-area-inset-top,0px) + 16px);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:22px;
+  background:linear-gradient(135deg,#4ade80,#60a5fa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.badge{
+  background:var(--surface2);border:0.5px solid var(--border);
+  padding:5px 12px;border-radius:20px;font-size:12px;color:var(--muted);
+}
+
+/* SCROLLABLE CONTENT */
+.scroll-content{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 80px);
+}
+
+/* HOME */
+.hero{padding:32px 20px 20px;}
+.hero-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1.15;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px;}
+
+.scan-area{
+  margin:20px;
+  background:var(--surface);border:1px dashed #4ade8044;border-radius:24px;
+  padding:36px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.scan-area::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at center,#4ade8008 0%,transparent 70%);
+  animation:glow 3s ease-in-out infinite;
+}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:0.4}}
+.scan-area:active{transform:scale(0.98);}
+.scan-icon{
+  width:72px;height:72px;
+  background:linear-gradient(135deg,#4ade8022,#22c55e11);
+  border:1px solid #4ade8044;border-radius:20px;
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+}
+.scan-label{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
+.scan-hint{font-size:13px;color:var(--muted);text-align:center;}
+
+.btn-secondary{
+  margin:0 20px 20px;
+  background:var(--surface2);color:var(--text);
+  border:0.5px solid var(--border);border-radius:14px;
+  padding:15px;font-size:15px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;width:calc(100% - 40px);
+}
+.btn-secondary:active{transform:scale(0.98);}
+
+.section-label{
+  font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);padding:0 20px;margin-bottom:10px;
+}
+.history-list{display:flex;flex-direction:column;gap:8px;padding:0 20px;}
+.hist-item{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:16px;padding:13px 15px;
+  display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .2s;
+}
+.hist-item:active{transform:scale(0.99);}
+.hist-icon{width:42px;height:42px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.hist-info{flex:1;min-width:0;}
+.hist-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hist-cal{font-size:13px;color:var(--accent);}
+.hist-date{font-size:11px;color:var(--muted);margin-top:1px;}
+.hist-score{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+
+/* CAMERA */
+.camera-wrap{flex:1;position:relative;overflow:hidden;background:#000;}
+#videoEl{width:100%;height:100%;object-fit:cover;display:block;}
+.cam-topbar{
+  position:absolute;top:0;left:0;right:0;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,#000000aa,transparent);
+  z-index:10;
+}
+.cam-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;pointer-events:none;}
+.scan-frame{
+  width:76%;max-width:300px;aspect-ratio:3/2;
+  border:2px solid var(--accent);border-radius:16px;
+  position:relative;animation:scanPulse 2s ease-in-out infinite;
+}
+@keyframes scanPulse{
+  0%,100%{border-color:#4ade80;box-shadow:0 0 0 0 #4ade8022}
+  50%{border-color:#22c55e;box-shadow:0 0 0 10px #4ade8000}
+}
+.scan-line{
+  position:absolute;left:4px;right:4px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:scanMove 2s linear infinite;top:0;border-radius:1px;
+}
+@keyframes scanMove{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+.corner{position:absolute;width:18px;height:18px;}
+.corner-tl{top:-1px;left:-1px;border-top:3px solid var(--accent);border-left:3px solid var(--accent);border-radius:4px 0 0 0;}
+.corner-tr{top:-1px;right:-1px;border-top:3px solid var(--accent);border-right:3px solid var(--accent);border-radius:0 4px 0 0;}
+.corner-bl{bottom:-1px;left:-1px;border-bottom:3px solid var(--accent);border-left:3px solid var(--accent);border-radius:0 0 0 4px;}
+.corner-br{bottom:-1px;right:-1px;border-bottom:3px solid var(--accent);border-right:3px solid var(--accent);border-radius:0 0 4px 0;}
+.cam-hint{background:#00000088;backdrop-filter:blur(8px);padding:8px 20px;border-radius:20px;font-size:13px;color:#ffffffaa;}
+.cam-bottom{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:20px 20px calc(env(safe-area-inset-bottom,0px) + 32px);
+  background:linear-gradient(to top,#000000cc,transparent);
+  display:flex;align-items:center;justify-content:center;gap:28px;
+}
+.btn-round{
+  width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  transition:all .2s;-webkit-tap-highlight-color:transparent;
+}
+.btn-capture{background:white;width:72px;height:72px;box-shadow:0 0 0 4px #ffffff33;}
+.btn-capture:active{transform:scale(0.95);}
+.btn-side{background:#ffffff22;backdrop-filter:blur(4px);}
+.btn-side:active{background:#ffffff44;}
+#snapCanvas{display:none;}
+
+/* LOADING */
+.loading-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px;}
+.spinner{width:56px;height:56px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;text-align:center;}
+.loading-sub{font-size:14px;color:var(--muted);text-align:center;line-height:1.5;}
+
+/* RESULT */
+.product-header{padding:20px 20px 16px;}
+.product-img{
+  width:100%;height:180px;background:var(--surface);border-radius:20px;
+  display:flex;align-items:center;justify-content:center;font-size:72px;
+  margin-bottom:14px;overflow:hidden;
+}
+.product-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+.product-brand{font-size:14px;color:var(--muted);}
+
+.cal-section{
+  margin:0 20px 16px;background:var(--surface);border:0.5px solid var(--border);
+  border-radius:20px;padding:20px;display:flex;align-items:center;gap:18px;
+}
+.cal-circle{width:88px;height:88px;flex-shrink:0;position:relative;}
+.cal-circle svg{transform:rotate(-90deg);}
+.cal-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.cal-big{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--accent);}
+.cal-unit{font-size:10px;color:var(--muted);}
+.cal-info{flex:1;min-width:0;}
+.cal-per{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.cal-bars{display:flex;flex-direction:column;gap:7px;}
+.cal-bar-row{display:flex;align-items:center;gap:7px;}
+.cal-bar-label{font-size:11px;color:var(--muted);width:54px;flex-shrink:0;}
+.cal-bar-track{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.cal-bar-fill{height:100%;border-radius:3px;transition:width 1s ease;width:0%;}
+.cal-bar-val{font-size:11px;font-weight:500;min-width:32px;text-align:right;}
+
+.nutri-grid{margin:0 20px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.nutri-card{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:14px;padding:13px;
+}
+.nutri-icon{font-size:18px;margin-bottom:5px;}
+.nutri-val{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
+.nutri-name{font-size:12px;color:var(--muted);margin-top:2px;}
+.nutri-sub{font-size:10px;color:var(--muted);opacity:0.7;}
+
+.score-bar{
+  margin:0 20px 16px;background:var(--surface);border:0.5px solid var(--border);
+  border-radius:20px;padding:18px;
+}
+.score-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.score-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.score-track{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;}
+.score-fill{height:100%;border-radius:5px;transition:width 1.2s ease;width:0%;}
+.score-labels{display:flex;justify-content:space-between;margin-top:6px;}
+.score-lbl{font-size:11px;color:var(--muted);}
+
+.tips-section{margin:0 20px 16px;}
+.tips-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:10px;}
+.tip-card{
+  background:var(--surface);border:0.5px solid var(--border);border-radius:14px;
+  padding:13px 15px;margin-bottom:8px;display:flex;gap:11px;align-items:flex-start;
+}
+.tip-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.tip-text{font-size:14px;line-height:1.55;color:var(--text);}
+
+/* MANUAL */
+.manual-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.input-label{font-size:13px;color:var(--muted);margin-bottom:6px;}
+.input-field{
+  width:100%;background:var(--surface);border:0.5px solid var(--border);
+  border-radius:14px;padding:13px 15px;font-size:15px;color:var(--text);
+  font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;resize:none;
+}
+.input-field:focus{border-color:#4ade8066;}
+.btn-primary{
+  background:var(--accent);color:#0a0f0d;border:none;border-radius:14px;
+  padding:15px;font-size:16px;font-weight:700;font-family:'Syne',sans-serif;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;
+}
+.btn-primary:active{transform:scale(0.98);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.error-box{
+  background:#f8717111;border:0.5px solid #f8717144;border-radius:14px;
+  padding:13px;font-size:14px;color:var(--danger);line-height:1.5;
+}
+.back-btn{
+  background:var(--surface2);border:0.5px solid var(--border);border-radius:12px;
+  padding:7px 13px;font-size:14px;color:var(--text);cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .2s;
+  font-family:'DM Sans',sans-serif;
+}
+.back-btn:active{background:var(--surface);}
+
+/* SETUP SCREEN */
+.setup-wrap{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:16px;}
+.setup-step{
+  background:var(--surface);border:0.5px solid var(--border);border-radius:18px;padding:18px;
+}
+.step-num{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--accent);color:#0a0f0d;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:14px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:10px;
+}
+.step-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:6px;}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.step-link{color:var(--info);text-decoration:none;}
+.api-input{
+  width:100%;background:var(--surface2);border:0.5px solid var(--border);
+  border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text);
+  font-family:'DM Sans',monospace;outline:none;margin-top:10px;
+  transition:border-color .2s;
+}
+.api-input:focus{border-color:#4ade8066;}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:#0a0f0dee;backdrop-filter:blur(20px);
+  border-top:0.5px solid var(--border);
+  display:flex;justify-content:space-around;
+  padding:10px 0 calc(env(safe-area-inset-bottom,0px) + 10px);
+  z-index:200;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 18px;border-radius:12px;cursor:pointer;
+  font-size:10px;color:var(--muted);transition:all .2s;background:none;border:none;
+  font-family:'DM Sans',sans-serif;
+}
+.nav-item.active{color:var(--accent);}
+.nav-icon{font-size:22px;}
+</style>
+</head>
+<body>
+<canvas id="snapCanvas"></canvas>
+
+<!-- ====== SCREEN: SETUP ====== -->
+<div class="screen active" id="screen-setup">
+  <div class="topbar">
+    <div class="logo">NutriScan</div>
+    <div class="badge">Configurare</div>
+  </div>
+  <div class="setup-wrap">
+    <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1.3;padding:4px 0 8px">
+      Configurare inițială 🚀
+    </div>
+    <p style="font-size:14px;color:var(--muted);line-height:1.6">
+      Aplicația folosește AI de la Anthropic. Ai nevoie de o cheie API gratuită.
+    </p>
+
+    <div class="setup-step">
+      <div class="step-num">1</div>
+      <div class="step-title">Creează un cont Anthropic</div>
+      <div class="step-desc">
+        Mergi pe <a href="https://console.anthropic.com" class="step-link" target="_blank">console.anthropic.com</a>
+        și creează un cont gratuit. Vei primi credite pentru a testa aplicația.
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-num">2</div>
+      <div class="step-title">Generează o cheie API</div>
+      <div class="step-desc">
+        În consolă, mergi la <strong style="color:var(--text)">API Keys</strong> → 
+        <strong style="color:var(--text)">Create Key</strong>.
+        Copiază cheia (începe cu <code style="color:var(--accent);font-size:12px">sk-ant-...</code>)
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-num">3</div>
+      <div class="step-title">Introdu cheia mai jos</div>
+      <div class="step-desc">
+        Cheia se salvează local pe dispozitivul tău. Nu se trimite nicăieri altundeva.
+      </div>
+      <input type="password" class="api-input" id="apiKeyInput" 
+        placeholder="sk-ant-api03-..." 
+        autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+
+    <button class="btn-primary" onclick="saveApiKey()">
+      ✅ &nbsp;Salvează și continuă
+    </button>
+    <div id="setupError"></div>
+
+    <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.6;padding-bottom:20px">
+      🔒 Cheia se salvează doar local pe telefon (localStorage).<br>
+      Nu o trimitem pe niciun server propriu.
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCREEN: HOME ====== -->
+<div class="screen" id="screen-home">
+  <div class="topbar">
+    <div class="logo">NutriScan</div>
+    <button class="badge" onclick="showScreen('screen-setup')" style="cursor:pointer;border:none">⚙️ Setări</button>
+  </div>
+  <div class="scroll-content">
+    <div class="hero">
+      <h1 class="hero-title">Scanează.<br><span>Află tot.</span></h1>
+      <p class="hero-sub">Fotografiază eticheta oricărui produs și află instantaneu calorii, nutrienți și sfaturi de sănătate personalizate.</p>
+    </div>
+
+    <div class="scan-area" onclick="goCamera()">
+      <div class="scan-icon">📷</div>
+      <div class="scan-label">Scanează o etichetă</div>
+      <div class="scan-hint">Apasă pentru a activa camera</div>
+    </div>
+
+    <button class="btn-secondary" onclick="showScreen('screen-manual')">
+      ✏️ &nbsp;Introdu manual produsul
+    </button>
+
+    <div class="section-label">Scanate recent</div>
+    <div class="history-list" id="historyList"></div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ====== SCREEN: CAMERA ====== -->
+<div class="screen" id="screen-camera">
+  <div class="camera-wrap">
+    <video id="videoEl" autoplay playsinline muted></video>
+    <div class="cam-topbar">
+      <button class="back-btn" style="background:#00000088;backdrop-filter:blur(8px);" 
+        onclick="stopCamera();showScreen('screen-home')">← Înapoi</button>
+      <div class="badge" style="background:#00000088;backdrop-filter:blur(8px);">Camera</div>
+    </div>
+    <div class="cam-overlay">
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+      </div>
+      <div class="cam-hint">Centrează eticheta în cadru</div>
+    </div>
+    <div class="cam-bottom">
+      <button class="btn-round btn-side" onclick="switchCamera()">🔄</button>
+      <button class="btn-round btn-capture" onclick="capturePhoto()">📸</button>
+      <button class="btn-round btn-side" onclick="stopCamera();showScreen('screen-manual')">✏️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCREEN: LOADING ====== -->
+<div class="screen" id="screen-loading">
+  <div class="topbar"><div class="logo">NutriScan</div></div>
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Se analizează...</div>
+    <div class="loading-sub" id="loadingSub">AI-ul procesează informațiile despre produs</div>
+  </div>
+</div>
+
+<!-- ====== SCREEN: RESULT ====== -->
+<div class="screen" id="screen-result">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('screen-home')">← Înapoi</button>
+    <div class="badge" id="resultBadge">Analiză completă</div>
+  </div>
+  <div class="scroll-content">
+    <div class="product-header">
+      <div class="product-img"><span id="productEmoji">🥐</span></div>
+      <div class="product-name" id="productName">Produs</div>
+      <div class="product-brand" id="productBrand"></div>
+    </div>
+
+    <div class="cal-section">
+      <div class="cal-circle">
+        <svg width="88" height="88" viewBox="0 0 88 88">
+          <circle cx="44" cy="44" r="36" fill="none" stroke="#182219" stroke-width="8"/>
+          <circle cx="44" cy="44" r="36" fill="none" stroke="#4ade80" stroke-width="8"
+            stroke-dasharray="226" id="calCircle" stroke-dashoffset="226" stroke-linecap="round"/>
+        </svg>
+        <div class="cal-num">
+          <div class="cal-big" id="calNum">0</div>
+          <div class="cal-unit">kcal</div>
+        </div>
+      </div>
+      <div class="cal-info">
+        <div class="cal-per" id="calPer">per 100g</div>
+        <div class="cal-bars" id="calBars"></div>
+      </div>
+    </div>
+
+    <div class="nutri-grid" id="nutriGrid"></div>
+
+    <div class="score-bar">
+      <div class="score-header">
+        <div class="score-title">Scor Sănătate</div>
+        <div class="score-badge" id="scoreBadge" style="padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;">--</div>
+      </div>
+      <div class="score-track">
+        <div class="score-fill" id="scoreFill"></div>
+      </div>
+      <div class="score-labels">
+        <span class="score-lbl">Nesănătos</span>
+        <span class="score-lbl">Sănătos</span>
+      </div>
+    </div>
+
+    <div class="tips-section">
+      <div class="tips-title">💡 Sfaturi personalizate</div>
+      <div id="tipsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCREEN: MANUAL ====== -->
+<div class="screen" id="screen-manual">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('screen-home')">← Înapoi</button>
+    <div class="logo">NutriScan</div>
+  </div>
+  <div class="manual-wrap">
+    <div>
+      <div class="input-label">Descrie produsul sau lipește informațiile de pe etichetă</div>
+      <textarea class="input-field" id="manualInput" rows="7"
+        placeholder="Exemple:&#10;• Ciocolată cu lapte Milka 100g&#10;• Iaurt grecesc simplu 0% grăsime&#10;• Suc de portocale Granini&#10;&#10;Sau lipește valorile nutriționale direct de pe etichetă..."></textarea>
+    </div>
+    <div id="manualError"></div>
+    <button class="btn-primary" id="manualBtn" onclick="analyzeManual()">
+      🔍 &nbsp;Analizează cu AI
+    </button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav" style="display:none">
+  <button class="nav-item active" onclick="showScreen('screen-home')" id="nav-home">
+    <span class="nav-icon">🏠</span>Acasă
+  </button>
+  <button class="nav-item" onclick="goCamera()" id="nav-scan">
+    <span class="nav-icon">📷</span>Scanează
+  </button>
+  <button class="nav-item" onclick="showScreen('screen-manual')" id="nav-manual">
+    <span class="nav-icon">✏️</span>Manual
+  </button>
+</div>
+
+<script>
+/* =========================================================
+   NUTRISCAN AI — JAVASCRIPT
+   ========================================================= */
+
+let stream = null;
+let facingMode = 'environment';
+let history = [];
+
+// Load history from storage
+try { history = JSON.parse(localStorage.getItem('nutriscan_history') || '[]'); } catch(e){}
+
+// Check if API key exists
+function getApiKey() {
+  return localStorage.getItem('nutriscan_api_key') || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key || !key.startsWith('sk-ant')) {
+    document.getElementById('setupError').innerHTML =
+      '<div class="error-box" style="margin-top:8px">Cheia trebuie să înceapă cu <code>sk-ant-</code>. Verificați că ați copiat-o corect.</div>';
+    return;
+  }
+  localStorage.setItem('nutriscan_api_key', key);
+  document.getElementById('setupError').innerHTML = '';
+  showScreen('screen-home');
+  document.getElementById('bottomNav').style.display = 'flex';
+  renderHistory();
+}
+
+// Init: check if key exists
+window.addEventListener('load', () => {
+  const key = getApiKey();
+  if (key) {
+    showScreen('screen-home');
+    document.getElementById('bottomNav').style.display = 'flex';
+    renderHistory();
+  }
+  // else stays on setup screen
+});
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Nav highlight
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const map = { 'screen-home': 'nav-home', 'screen-camera': 'nav-scan', 'screen-manual': 'nav-manual' };
+  if (map[id]) document.getElementById(map[id]).classList.add('active');
+  // Hide nav on camera/loading
+  const hideNav = ['screen-camera', 'screen-loading', 'screen-setup'];
+  document.getElementById('bottomNav').style.display = hideNav.includes(id) ? 'none' : 'flex';
+}
+
+async function goCamera() {
+  showScreen('screen-camera');
+  await startCamera();
+}
+
+async function startCamera() {
+  try {
+    if (stream) stopCamera();
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    document.getElementById('videoEl').srcObject = stream;
+  } catch(e) {
+    stopCamera();
+    showScreen('screen-manual');
+    document.getElementById('manualError').innerHTML =
+      '<div class="error-box">Camera nu a putut fi accesată. Verificați că ați acordat permisiunea și folosiți HTTPS. Puteți folosi modul manual.</div>';
+  }
+}
+
+function stopCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  const v = document.getElementById('videoEl');
+  if (v) v.srcObject = null;
+}
+
+async function switchCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  await startCamera();
+}
+
+function capturePhoto() {
+  const video = document.getElementById('videoEl');
+  const canvas = document.getElementById('snapCanvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  stopCamera();
+  analyzeImage(b64);
+}
+
+async function analyzeImage(b64) {
+  showScreen('screen-loading');
+  setLoading('Se analizează eticheta...', 'AI-ul procesează imaginea produsului');
+  const key = getApiKey();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
+            { type: 'text', text: getPromptImage() }
+          ]
+        }]
+      })
+    });
+    await handleResponse(res);
+  } catch(e) {
+    showScreen('screen-manual');
+    document.getElementById('manualError').innerHTML =
+      '<div class="error-box">Eroare de rețea. Verificați conexiunea la internet și cheia API în Setări.</div>';
+  }
+}
+
+async function analyzeManual() {
+  const input = document.getElementById('manualInput').value.trim();
+  if (!input) {
+    document.getElementById('manualError').innerHTML =
+      '<div class="error-box">Introduceți informații despre produs.</div>';
+    return;
+  }
+  document.getElementById('manualError').innerHTML = '';
+  document.getElementById('manualBtn').disabled = true;
+  showScreen('screen-loading');
+  setLoading('Se calculează valorile nutriționale...', 'AI-ul analizează informațiile produsului');
+  const key = getApiKey();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: getPromptManual(input) }]
+      })
+    });
+    await handleResponse(res);
+  } catch(e) {
+    showScreen('screen-manual');
+    document.getElementById('manualError').innerHTML =
+      '<div class="error-box">Eroare. Verificați conexiunea și cheia API în Setări.</div>';
+  } finally {
+    document.getElementById('manualBtn').disabled = false;
+  }
+}
+
+async function handleResponse(res) {
+  const data = await res.json();
+  if (data.error) {
+    showScreen('screen-manual');
+    document.getElementById('manualError').innerHTML =
+      `<div class="error-box">Eroare API: ${data.error.message || 'Cheie invalidă. Verificați Setările.'}</div>`;
+    return;
+  }
+  const text = (data.content || []).map(i => i.text || '').join('');
+  const clean = text.replace(/```json\n?|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+  renderResult(parsed);
+}
+
+function getPromptImage() {
+  return `Ești un nutriționist AI expert. Analizează această imagine cu eticheta produsului alimentar.
+
+Returnează DOAR un JSON valid cu exact această structură (fără markdown, fără backticks):
+{
+  "product_name": "Numele produsului",
+  "brand": "Marca produsului",
+  "emoji": "un emoji reprezentativ",
+  "serving": "ex: per 100g",
+  "calories": 250,
+  "health_score": 65,
+  "nutrients": {
+    "protein": {"value": 8.5, "unit": "g"},
+    "fat": {"value": 12, "unit": "g"},
+    "saturated_fat": {"value": 5, "unit": "g"},
+    "carbs": {"value": 30, "unit": "g"},
+    "sugar": {"value": 15, "unit": "g"},
+    "fiber": {"value": 2.5, "unit": "g"},
+    "salt": {"value": 0.8, "unit": "g"}
+  },
+  "tips": [
+    {"icon": "⚠️", "color": "#fbbf24", "text": "Sfat 1 specific produsului"},
+    {"icon": "✅", "color": "#4ade80", "text": "Sfat 2 pozitiv"},
+    {"icon": "💡", "color": "#60a5fa", "text": "Sfat 3 practic"}
+  ]
+}
+health_score: 0-100. Sfaturile în română, specifice și utile. Dacă nu citești eticheta clar, estimează.`;
+}
+
+function getPromptManual(input) {
+  return `Ești un nutriționist AI expert. Analizează acest produs: "${input}"
+
+Returnează DOAR un JSON valid (fără markdown, fără backticks):
+{
+  "product_name": "Numele produsului",
+  "brand": "Marca sau Necunoscut",
+  "emoji": "un emoji reprezentativ",
+  "serving": "per 100g",
+  "calories": 250,
+  "health_score": 65,
+  "nutrients": {
+    "protein": {"value": 8.5, "unit": "g"},
+    "fat": {"value": 12, "unit": "g"},
+    "saturated_fat": {"value": 5, "unit": "g"},
+    "carbs": {"value": 30, "unit": "g"},
+    "sugar": {"value": 15, "unit": "g"},
+    "fiber": {"value": 2.5, "unit": "g"},
+    "salt": {"value": 0.8, "unit": "g"}
+  },
+  "tips": [
+    {"icon": "⚠️", "color": "#fbbf24", "text": "Sfat 1"},
+    {"icon": "✅", "color": "#4ade80", "text": "Sfat 2"},
+    {"icon": "💡", "color": "#60a5fa", "text": "Sfat 3"}
+  ]
+}
+health_score: 0-100. Sfaturile în română, practice și specifice. Estimează valorile lipsă.`;
+}
+
+function setLoading(t, s) {
+  document.getElementById('loadingText').textContent = t;
+  document.getElementById('loadingSub').textContent = s;
+}
+
+function renderResult(d) {
+  document.getElementById('productName').textContent = d.product_name || 'Produs necunoscut';
+  document.getElementById('productBrand').textContent = d.brand || '';
+  document.getElementById('productEmoji').textContent = d.emoji || '🍎';
+
+  const cal = Math.round(d.calories || 0);
+  document.getElementById('calNum').textContent = cal;
+  document.getElementById('calPer').textContent = d.serving || 'per 100g';
+  const pct = Math.min(cal / 600, 1);
+  setTimeout(() => { document.getElementById('calCircle').style.strokeDashoffset = 226 * (1 - pct); }, 200);
+
+  const n = d.nutrients || {};
+  const bars = [
+    { label: 'Proteine', val: n.protein?.value || 0, max: 35, color: '#60a5fa' },
+    { label: 'Grăsimi',  val: n.fat?.value || 0,     max: 50, color: '#f87171' },
+    { label: 'Glucide',  val: n.carbs?.value || 0,   max: 100, color: '#fbbf24' },
+  ];
+  document.getElementById('calBars').innerHTML = bars.map(b => `
+    <div class="cal-bar-row">
+      <div class="cal-bar-label">${b.label}</div>
+      <div class="cal-bar-track"><div class="cal-bar-fill" style="background:${b.color}" data-pct="${Math.min(b.val/b.max*100,100).toFixed(0)}"></div></div>
+      <div class="cal-bar-val" style="color:${b.color}">${b.val}g</div>
+    </div>`).join('');
+  setTimeout(() => document.querySelectorAll('.cal-bar-fill').forEach(el => el.style.width = el.dataset.pct + '%'), 200);
+
+  const cards = [
+    { icon:'🥩', key:'protein',      name:'Proteine', sub:'per porție' },
+    { icon:'🧈', key:'fat',          name:'Grăsimi',  sub:`din care sat. ${n.saturated_fat?.value||0}g` },
+    { icon:'🌾', key:'carbs',        name:'Glucide',  sub:`din care zahăr ${n.sugar?.value||0}g` },
+    { icon:'🌿', key:'fiber',        name:'Fibre',    sub:'per porție' },
+    { icon:'🧂', key:'salt',         name:'Sare',     sub:'per porție' },
+    { icon:'🔥', key:null,           name:'Calorii',  sub:'per porție', fixed: cal + ' kcal' },
+  ];
+  document.getElementById('nutriGrid').innerHTML = cards.map(c => `
+    <div class="nutri-card">
+      <div class="nutri-icon">${c.icon}</div>
+      <div class="nutri-val">${c.fixed || ((n[c.key]?.value || 0) + (n[c.key]?.unit || 'g'))}</div>
+      <div class="nutri-name">${c.name}</div>
+      <div class="nutri-sub">${c.sub}</div>
+    </div>`).join('');
+
+  const score = Math.round(d.health_score || 50);
+  const sc = score >= 70 ? '#4ade80' : score >= 40 ? '#fbbf24' : '#f87171';
+  const sl = score >= 70 ? 'Sănătos 🌿' : score >= 40 ? 'Moderat ⚠️' : 'Evitați ❌';
+  document.getElementById('scoreBadge').textContent = sl;
+  document.getElementById('scoreBadge').style.cssText = `padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;background:${sc}22;color:${sc}`;
+  setTimeout(() => {
+    document.getElementById('scoreFill').style.cssText = `width:${score}%;background:linear-gradient(90deg,#f87171,#fbbf24 40%,#4ade80);`;
+  }, 300);
+
+  document.getElementById('tipsList').innerHTML = (d.tips || []).map(t => `
+    <div class="tip-card">
+      <div class="tip-icon" style="background:${t.color}22">${t.icon}</div>
+      <div class="tip-text">${t.text}</div>
+    </div>`).join('');
+
+  history.unshift({ name: d.product_name, emoji: d.emoji || '🍎', calories: cal, score, date: new Date().toLocaleDateString('ro-RO'), data: d });
+  if (history.length > 20) history = history.slice(0, 20);
+  try { localStorage.setItem('nutriscan_history', JSON.stringify(history)); } catch(e){}
+
+  showScreen('screen-result');
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!history.length) {
+    list.innerHTML = `<div style="text-align:center;padding:30px 20px;color:var(--muted);font-size:14px;line-height:1.6">
+      Niciun produs scanat încă.<br>Apasă camera pentru a începe!</div>`;
+    return;
+  }
+  list.innerHTML = history.slice(0, 5).map((h, i) => {
+    const sc = h.score >= 70 ? '#4ade80' : h.score >= 40 ? '#fbbf24' : '#f87171';
+    return `<div class="hist-item" onclick="renderResult(history[${i}].data)">
+      <div class="hist-icon">${h.emoji}</div>
+      <div class="hist-info">
+        <div class="hist-name">${h.name}</div>
+        <div class="hist-cal">${h.calories} kcal</div>
+        <div class="hist-date">${h.date}</div>
+      </div>
+      <div class="hist-score" style="background:${sc}22;color:${sc}">${h.score}</div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
